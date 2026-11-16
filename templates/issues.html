@@ -1,0 +1,48 @@
+
+{% extends "base.html" %}
+
+{% block title %}Issues - CityFix{% endblock %}
+
+{% block content %}
+
+<section class="section">
+    <h1>Community Issues</h1>
+    <p>Explore complaints reported by residents.</p>
+
+    <div class="grid">
+
+        {% for issue in issues %}
+
+        <div class="card issue-card">
+
+            <span class="tag">{{ issue.category }}</span>
+
+            <h3>{{ issue.title }}</h3>
+
+            <p>{{ issue.description }}</p>
+
+            <p>📍 {{ issue.location }}</p>
+
+            <p>Ward {{ issue.ward }}</p>
+
+            <p>👍 {{ issue.upvotes }} Upvotes</p>
+
+            <span class="status">{{ issue.status }}</span>
+
+            <a class="btn"
+               href="{{ url_for('issue_detail', issue_id=issue.id) }}">
+               View Details
+            </a>
+
+        </div>
+
+        {% else %}
+
+        <p>No complaints reported yet.</p>
+
+        {% endfor %}
+
+    </div>
+</section>
+
+{% endblock %}
