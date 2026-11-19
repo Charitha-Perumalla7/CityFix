@@ -478,7 +478,7 @@ def delete_dept_account(user, acc_id):
     conn.close()
     return jsonify({"ok": True})
 
+init_db()
 
 if __name__ == "__main__":
-    init_db()
     app.run(debug=True, port=5000)
