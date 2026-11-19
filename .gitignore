@@ -1,7 +1,23 @@
-venv/
-__pycache__/
-.pytest_cache/
-*.pyc
+# Local database
 cityfix.db
-.DS_Store
+
+# Windows files
+desktop.ini
+
+# Python generated files
+__pycache__/
+*.py[cod]
+
+# Testing
+.pytest_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Archives
+*.zip
+
+# Environment secrets
 .env

@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CityFix — Official Municipal Civic Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            forest: {
+              950: '#04271B',
+              900: '#063B29',
+              800: '#0A4F38',
+              700: '#0E6648',
+            },
+            emerald: {
+              50: '#ECFDF5',
+              100: '#D1FAE5',
+              400: '#34D399',
+              500: '#10B981',
+              600: '#059669',
+              700: '#047857',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; color: #0F172A; }
+    .hero-gradient { background: linear-gradient(135deg, #063B29 0%, #094D36 60%, #04271B 100%); }
+    .card-shadow { box-shadow: 0 4px 20px -2px rgba(6, 59, 41, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04); }
+    .modal-backdrop { background: rgba(4, 39, 27, 0.65); backdrop-filter: blur(4px); }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm"></div>
+
+  <!-- Top White Navigation Bar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <!-- Brand -->
+      <button onclick="navigate('home')" class="flex items-center gap-3 text-left focus:outline-none">
+        <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-sm">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="text-lg font-extrabold tracking-tight text-slate-900 leading-none">CityFix</div>
+          <div class="text-[10px] font-bold tracking-widest text-emerald-700 uppercase mt-0.5">CIVIC PORTAL</div>
+        </div>
+      </button>
+
+      <!-- Center Nav Links -->
+      <nav class="hidden md:flex items-center gap-1" id="desktop-nav">
+        <button data-nav="home" onclick="navigate('home')" class="nav-btn px-4 py-2 rounded-lg text-sm font-semibold transition">Home</button>
+        <button data-nav="complaints" onclick="navigate('complaints')" class="nav-btn px-4 py-2 rounded-lg text-sm font-semibold transition">Public Complaints</button>
+        <button data-nav="report" onclick="handleReportClick()" class="nav-btn px-4 py-2 rounded-lg text-sm font-semibold transition">Report Issue</button>
+        <button data-nav="dashboard" id="nav-dashboard-btn" onclick="navigate('dashboard')" class="nav-btn hidden px-4 py-2 rounded-lg text-sm font-semibold transition">My Dashboard</button>
+      </nav>
+
+      <!-- Right Auth Controls -->
+      <div class="flex items-center gap-2.5" id="auth-nav-area">
+        <!-- Populated dynamically by JS -->
+      </div>
+    </div>
+
+    <!-- Mobile Nav Strip -->
+    <div class="md:hidden flex items-center justify-around border-t border-slate-100 bg-slate-50 px-2 py-1.5 text-xs font-semibold">
+      <button onclick="navigate('home')" class="px-2.5 py-1.5 rounded-md text-slate-700">Home</button>
+      <button onclick="navigate('complaints')" class="px-2.5 py-1.5 rounded-md text-slate-700">Complaints</button>
+      <button onclick="handleReportClick()" class="px-2.5 py-1.5 rounded-md text-emerald-700">+ Report</button>
+      <button id="mobile-dash-btn" onclick="navigate('dashboard')" class="hidden px-2.5 py-1.5 rounded-md text-slate-700">Dashboard</button>
+    </div>
+  </header>
+
+  <!-- Main Content View Container -->
+  <main id="app-main" class="flex-1"></main>
+
+  <!-- Official Municipal Footer -->
+  <footer class="bg-forest-950 text-slate-300 mt-16 border-t border-forest-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div>
+        <div class="flex items-center gap-2.5 text-white font-bold text-lg">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+          CityFix Municipal Civic Portal
+        </div>
+        <p class="text-xs text-slate-400 mt-1.5 max-w-md">
+          Official citizen-to-department grievance resolution system with transparent audit timelines and visual Before &amp; After repair verification.
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-3 text-xs font-medium">
+        <button onclick="navigate('home')" class="px-3 py-1.5 rounded-lg bg-forest-900 hover:bg-forest-800 text-emerald-100">Home</button>
+        <button onclick="navigate('complaints')" class="px-3 py-1.5 rounded-lg bg-forest-900 hover:bg-forest-800 text-emerald-100">Public Complaints</button>
+        <button onclick="openAuthModal('citizen', 'login')" class="px-3 py-1.5 rounded-lg bg-forest-900 hover:bg-forest-800 text-emerald-100">Citizen Login</button>
+        <button onclick="openAuthModal('authority', 'login')" class="px-3 py-1.5 rounded-lg bg-emerald-700/40 border border-emerald-500/30 hover:bg-emerald-700/60 text-emerald-200">Authority Portal</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== SEPARATE LOGIN & REGISTRATION MODAL ==================== -->
+  <div id="auth-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200 relative">
+      <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <!-- Portal Switch Tabs (Separate Citizen vs Authority Portals) -->
+      <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl mb-5">
+        <button id="tab-portal-citizen" onclick="switchAuthPortal('citizen')" class="py-2 rounded-lg text-xs font-bold transition">
+          Citizen Portal
+        </button>
+        <button id="tab-portal-authority" onclick="switchAuthPortal('authority')" class="py-2 rounded-lg text-xs font-bold transition">
+          Authority Portal
+        </button>
+      </div>
+
+      <div id="auth-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ==================== COMPLAINT DETAIL & ACTION MODAL ==================== -->
+  <div id="detail-modal" class="fixed inset-0 z-50 hidden modal-backdrop flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 relative my-8 max-h-[90vh] overflow-y-auto">
+      <button onclick="closeDetailModal()" class="sticky top-0 float-right text-slate-400 hover:text-slate-800 bg-slate-100 rounded-lg p-1.5">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      <div id="detail-modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    // -------------------- APPLICATION STATE --------------------
+    const state = {
+      view: 'home',
+      user: null,
+      isGuest: false,
+      categories: [],
+      departments: [],
+      categoryDeptMap: {},
+      statuses: [],
+      complaints: [],
+      authorityComplaints: [],
+      deptAccounts: [],
+      filters: {
+        search: '',
+        category: 'ALL',
+        status: 'ALL',
+        sort: 'recent'
+      },
+      authPortal: 'citizen', // 'citizen' | 'authority'
+      authMode: 'login',     // 'login' | 'register'
+      selectedComplaintId: null,
+      reportBeforePhoto: '',
+      duplicateMatches: []
+    };
+
+    const CATEGORY_ICONS = {
+      "Roads & Potholes": "M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7",
+      "Waste Management": "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16",
+      "Street Lighting": "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z",
+      "Drainage & Sewage": "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z",
+      "Water Supply": "M12 3.1c-3.8 4.4-6 7.6-6 10.9a6 6 0 1012 0c0-3.3-2.2-6.5-6-10.9z",
+      "Parks & Public Spaces": "M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z",
+      "Footpaths & Accessibility": "M13 10V3L4 14h7v7l9-11h-7z",
+      "Traffic & Road Safety": "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z",
+      "Public Toilets & Sanitation": "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4",
+      "Stray Animal Concerns": "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+    };
+
+    // -------------------- UTILITIES --------------------
+    function showToast(msg, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      const styles = type === 'error'
+        ? 'bg-rose-900 text-white border-rose-700'
+        : type === 'warning'
+        ? 'bg-amber-900 text-white border-amber-700'
+        : 'bg-forest-900 text-white border-emerald-600';
+      el.className = `${styles} border px-4 py-3 rounded-xl shadow-xl text-xs font-semibold flex items-center justify-between gap-3 transition-all`;
+      el.innerHTML = `<span>${escapeHtml(msg)}</span>`;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 4000);
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function statusBadge(status) {
+      const map = {
+        "Reported": "bg-slate-100 text-slate-700 border-slate-300",
+        "Assigned": "bg-sky-50 text-sky-700 border-sky-200",
+        "In Progress": "bg-amber-50 text-amber-700 border-amber-200",
+        "Resolved": "bg-emerald-50 text-emerald-700 border-emerald-200",
+        "Reopened": "bg-rose-50 text-rose-700 border-rose-200"
+      };
+      const cls = map[status] || map["Reported"];
+      return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${cls}">${escapeHtml(status)}</span>`;
+    }
+
+    async function api(url, options = {}) {
+      const res = await fetch(url, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Request failed');
+      }
+      return data;
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // -------------------- INITIALIZATION & DATA SYNC --------------------
+    async function initApp() {
+      try {
+        const meta = await api('/api/meta');
+        state.categories = meta.categories;
+        state.departments = meta.departments;
+        state.categoryDeptMap = meta.category_department_map;
+        state.statuses = meta.statuses;
+        state.user = meta.user;
+        await refreshData();
+        renderHeader();
+        renderCurrentView();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function refreshData() {
+      const pub = await api('/api/complaints?scope=public');
+      state.complaints = pub.complaints;
+
+      if (state.user && (state.user.role === 'main_authority' || state.user.role === 'dept_authority')) {
+        const authData = await api('/api/complaints?scope=authority');
+        state.authorityComplaints = authData.complaints;
+      } else {
+        state.authorityComplaints = [];
+      }
+
+      if (state.user && state.user.role === 'main_authority') {
+        const accData = await api('/api/authority/accounts');
+        state.deptAccounts = accData.accounts;
+      } else {
+        state.deptAccounts = [];
+      }
+    }
+
+    // -------------------- NAVIGATION & HEADER --------------------
+    function navigate(view) {
+      if (view === 'report') {
+        handleReportClick();
+        return;
+      }
+      if (view === 'dashboard' && !state.user) {
+        openAuthModal('citizen', 'login');
+        return;
+      }
+      state.view = view;
+      renderHeader();
+      renderCurrentView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function handleReportClick() {
+      if (!state.user) {
+        if (state.isGuest) {
+          showToast('Guest accounts can only browse public complaints. Please sign in as a Citizen to report an issue.', 'warning');
+        } else {
+          showToast('Please sign in as a registered Citizen to submit a civic complaint.', 'warning');
+        }
+        openAuthModal('citizen', 'login');
+        return;
+      }
+      if (state.user.role !== 'citizen') {
+        showToast('Authority accounts manage complaints; switch to a Citizen account to file a report.', 'warning');
+        return;
+      }
+      state.reportBeforePhoto = '';
+      state.duplicateMatches = [];
+      state.view = 'report';
+      renderHeader();
+      renderCurrentView();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function enterGuestMode() {
+      state.user = null;
+      state.isGuest = true;
+      closeAuthModal();
+      renderHeader();
+      renderCurrentView();
+      showToast('Continuing as Guest (Read-only public browsing enabled).');
+    }
+
+    async function logoutUser() {
+      await api('/api/auth/logout', { method: 'POST' });
+      state.user = null;
+      state.isGuest = false;
+      state.view = 'home';
+      await refreshData();
+      renderHeader();
+      renderCurrentView();
+      showToast('Signed out successfully.');
+    }
+
+    function renderHeader() {
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        const target = btn.getAttribute('data-nav');
+        if (target === state.view) {
+          btn.className = 'nav-btn px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-50 text-emerald-700';
+        } else {
+          btn.className = 'nav-btn px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50';
+        }
+      });
+
+      const dashBtn = document.getElementById('nav-dashboard-btn');
+      const mobDashBtn = document.getElementById('mobile-dash-btn');
+      if (state.user) {
+        dashBtn.classList.remove('hidden');
+        mobDashBtn.classList.remove('hidden');
+        dashBtn.textContent = state.user.role === 'citizen'
+          ? 'Citizen Dashboard'
+          : state.user.role === 'main_authority'
+          ? 'Main Authority'
+          : 'Dept Console';
+      } else {
+        dashBtn.classList.add('hidden');
+        mobDashBtn.classList.add('hidden');
+      }
+
+      const authArea = document.getElementById('auth-nav-area');
+      if (state.user) {
+        const roleBadge = state.user.role === 'main_authority'
+          ? 'Main Authority'
+          : state.user.role === 'dept_authority'
+          ? state.user.department
+          : 'Citizen';
+        authArea.innerHTML = `
+          <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-900">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>${escapeHtml(state.user.name)}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white text-emerald-700 border border-emerald-200">${escapeHtml(roleBadge)}</span>
+          </div>
+          <button onclick="logoutUser()" class="px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700">
+            Sign Out
+          </button>
+        `;
+      } else if (state.isGuest) {
+        authArea.innerHTML = `
+          <span class="px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-600">
+            Guest (View Only)
+          </span>
+          <button onclick="openAuthModal('citizen', 'login')" class="px-4 py-2 rounded-xl bg-forest-900 hover:bg-forest-800 text-white text-xs font-bold">
+            Sign In
+          </button>
+        `;
+      } else {
+        authArea.innerHTML = `
+          <button onclick="openAuthModal('citizen', 'login')" class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100">
+            Sign In
+          </button>
+          <button onclick="openAuthModal('citizen', 'register')" class="px-4 py-2 rounded-xl bg-forest-900 hover:bg-forest-800 text-white text-xs font-bold shadow-sm">
+            Get Started
+          </button>
+        `;
+      }
+    }
+
+    // -------------------- MAIN VIEW ROUTER --------------------
+    function renderCurrentView() {
+      const main = document.getElementById('app-main');
+      if (state.view === 'home') {
+        main.innerHTML = renderHomeView();
+      } else if (state.view === 'complaints') {
+        main.innerHTML = renderComplaintsView();
+      } else if (state.view === 'report') {
+        main.innerHTML = renderReportView();
+      } else if (state.view === 'dashboard') {
+        if (state.user?.role === 'main_authority') {
+          main.innerHTML = renderMainAuthorityDashboard();
+        } else if (state.user?.role === 'dept_authority') {
+          main.innerHTML = renderDeptAuthorityDashboard();
+        } else {
+          main.innerHTML = renderCitizenDashboard();
+        }
+      }
+    }
+
+    // -------------------- 1. HOME VIEW (Exact Reference Hero + White Tracker Below) --------------------
+    function renderHomeView() {
+      const total = state.complaints.length;
+      const active = state.complaints.filter(c => c.status !== 'Resolved').length;
+      const resolved = state.complaints.filter(c => c.status === 'Resolved').length;
+      const totalVotes = state.complaints.reduce((sum, c) => sum + c.votes, 0);
+      const featured = state.complaints[0];
+
+      const catCards = state.categories.map(cat => {
+        const count = state.complaints.filter(c => c.category === cat && c.status !== 'Resolved').length;
+        const iconPath = CATEGORY_ICONS[cat] || CATEGORY_ICONS["Roads & Potholes"];
+        const dept = state.categoryDeptMap[cat] || '';
+        return `
+          <button onclick="filterByCategory('${escapeHtml(cat)}')" class="group text-left bg-white rounded-2xl p-5 border border-slate-200/90 hover:border-emerald-500 card-shadow transition-all flex flex-col justify-between">
+            <div class="flex items-start justify-between gap-3">
+              <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="${iconPath}"/>
+                </svg>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${count > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}">
+                ${count} Active
+              </span>
+            </div>
+            <div class="mt-4">
+              <h3 class="font-bold text-slate-900 text-sm group-hover:text-emerald-700 transition">${escapeHtml(cat)}</h3>
+              <p class="text-[11px] text-slate-500 mt-1">${escapeHtml(dept)}</p>
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      const recentCards = state.complaints.slice(0, 3).map(c => renderComplaintCard(c)).join('');
+
+      return `
+        <!-- Dark Emerald Green Hero Section (Preserving Exact Reference Quote & Floating Status Card) -->
+        <section class="hero-gradient text-white pt-14 pb-20">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-10 items-center">
+            <div class="lg:col-span-7">
+              <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-emerald-200 text-xs font-semibold mb-6">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                Official Municipal Issue Resolution Platform
+              </div>
+              <h1 class="text-4xl sm:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-[1.08]">
+                Better Neighborhoods Start With <span class="text-emerald-400">Your Voice.</span>
+              </h1>
+              <p class="mt-5 text-base sm:text-lg text-emerald-100/90 max-w-2xl leading-relaxed">
+                Report potholes, streetlight failures, and civic infrastructure problems directly to municipal departments—and track every step until resolution.
+              </p>
+              <div class="mt-8 flex flex-wrap items-center gap-4">
+                <button onclick="handleReportClick()" class="px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-forest-950 font-extrabold text-sm shadow-lg transition flex items-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                  Report a Civic Issue
+                </button>
+                <button onclick="navigate('complaints')" class="px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-bold text-sm transition">
+                  Browse Public Complaints
+                </button>
+              </div>
+            </div>
+
+            <!-- Right Floating Live Status Card (Matches Reference Screenshot) -->
+            <div class="lg:col-span-5">
+              ${featured ? `
+                <div onclick="openDetailModal('${featured.id}')" class="cursor-pointer bg-white text-slate-900 rounded-2xl p-6 shadow-2xl border border-white/40 hover:-translate-y-0.5 transition">
+                  <div class="flex items-center justify-between gap-2">
+                    ${statusBadge(featured.status)}
+                    <span class="text-xs font-semibold text-slate-500">${escapeHtml(featured.department)}</span>
+                  </div>
+                  <h3 class="mt-3 text-lg font-extrabold text-slate-900 leading-snug">${escapeHtml(featured.title)}</h3>
+                  <p class="mt-1.5 text-xs text-slate-500 flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                    ${escapeHtml(featured.location)} • <span class="font-mono font-bold text-emerald-700">${escapeHtml(featured.id)}</span>
+                  </p>
+                  <div class="mt-5 pt-4 border-t border-slate-100 space-y-3">
+                    ${featured.timeline.slice(-2).map(t => `
+                      <div class="flex items-start gap-2.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1 shrink-0"></span>
+                        <div>
+                          <div class="text-xs font-bold text-slate-800">${escapeHtml(t.status)} — ${escapeHtml(t.actor)}</div>
+                          <div class="text-[11px] text-slate-500">${escapeHtml(t.note)}</div>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        </section>
+
+        <!-- White Tracker & Quick Ticket Lookup Bar Directly Below Green Hero -->
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-9 relative z-10">
+          <div class="bg-white rounded-2xl border border-slate-200 card-shadow p-5 sm:p-6 grid lg:grid-cols-12 gap-6 items-center">
+            <div class="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div class="text-2xl font-extrabold text-slate-900">${total}</div>
+                <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mt-0.5">Total Tickets</div>
+              </div>
+              <div class="p-3 rounded-xl bg-amber-50/70 border border-amber-100">
+                <div class="text-2xl font-extrabold text-amber-700">${active}</div>
+                <div class="text-[11px] font-semibold text-amber-800 uppercase tracking-wider mt-0.5">Active Issues</div>
+              </div>
+              <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                <div class="text-2xl font-extrabold text-emerald-700">${resolved}</div>
+                <div class="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider mt-0.5">Resolved</div>
+              </div>
+              <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div class="text-2xl font-extrabold text-slate-900">${totalVotes}</div>
+                <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mt-0.5">Citizen Votes</div>
+              </div>
+            </div>
+
+            <!-- Instant Ticket Tracking Lookup -->
+            <div class="lg:col-span-5">
+              <label class="block text-[11px] font-bold uppercase tracking-wider text-emerald-700 mb-1.5">Track Complaint by Ticket ID</label>
+              <form onsubmit="trackTicketById(event)" class="flex gap-2">
+                <input id="quick-track-input" type="text" placeholder="e.g. CF-1042" class="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-mono uppercase focus:outline-none focus:border-emerald-600" />
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-forest-900 hover:bg-forest-800 text-white text-xs font-bold">
+                  Track Status
+                </button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- Exact 10 Civic Categories Grid -->
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-14">
+          <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-7">
+            <div>
+              <div class="text-xs font-bold uppercase tracking-widest text-emerald-700">10 Official Municipal Sectors</div>
+              <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Browse by Civic Category</h2>
+            </div>
+            <button onclick="navigate('complaints')" class="text-sm font-bold text-emerald-700 hover:text-emerald-800">
+              View All Complaints &rarr;
+            </button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            ${catCards}
+          </div>
+        </section>
+
+        <!-- Recent Public Complaints Feed -->
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
+          <div class="flex items-end justify-between mb-7">
+            <div>
+              <div class="text-xs font-bold uppercase tracking-widest text-emerald-700">Live Municipal Feed</div>
+              <h2 class="text-2xl font-extrabold text-slate-900 mt-1">Recent Citizen Reports</h2>
+            </div>
+            <button onclick="navigate('complaints')" class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700">
+              Open Directory
+            </button>
+          </div>
+          <div class="grid md:grid-cols-3 gap-6">
+            ${recentCards}
+          </div>
+        </section>
+      `;
+    }
+
+    function trackTicketById(e) {
+      e.preventDefault();
+      const val = (document.getElementById('quick-track-input')?.value || '').trim().toUpperCase();
+      if (!val) return;
+      const found = state.complaints.find(c => c.id.toUpperCase() === val);
+      if (!found) {
+        showToast(`No complaint found with Ticket ID "${val}".`, 'error');
+        return;
+      }
+      openDetailModal(found.id);
+    }
+
+    function filterByCategory(cat) {
+      state.filters.category = cat;
+      navigate('complaints');
+    }
+
+    // -------------------- SHARED COMPLAINT CARD --------------------
+    function renderComplaintCard(c) {
+      const isCitizen = state.user && state.user.role === 'citizen';
+      const voteBtnClass = c.has_voted
+        ? 'bg-emerald-600 text-white border-emerald-600'
+        : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-500';
+
+      return `
+        <article class="bg-white rounded-2xl border border-slate-200 card-shadow overflow-hidden flex flex-col justify-between">
+          <div>
+            <div class="relative h-44 bg-slate-100 overflow-hidden cursor-pointer" onclick="openDetailModal('${c.id}')">
+              <img src="${c.after_photo || c.before_photo}" alt="${escapeHtml(c.title)}" class="w-full h-full object-cover" />
+              <div class="absolute top-3 left-3 flex items-center gap-1.5">
+                ${statusBadge(c.status)}
+                ${c.after_photo ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-forest-900 text-emerald-300">Before &amp; After Verified</span>` : ''}
+              </div>
+              <span class="absolute bottom-2.5 right-2.5 px-2.5 py-0.5 rounded-md bg-slate-900/80 text-white font-mono text-[11px] font-bold">
+                ${escapeHtml(c.id)}
+              </span>
+            </div>
+
+            <div class="p-5">
+              <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-wide">${escapeHtml(c.category)}</div>
+              <h3 onclick="openDetailModal('${c.id}')" class="cursor-pointer mt-1 font-extrabold text-slate-900 text-base hover:text-emerald-700 transition">
+                ${escapeHtml(c.title)}
+              </h3>
+              <p class="mt-2 text-xs text-slate-600 line-clamp-2">${escapeHtml(c.description)}</p>
+              <div class="mt-3 text-xs text-slate-500 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                <span class="truncate">${escapeHtml(c.location)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+            <div class="text-[11px] text-slate-500">
+              By <span class="font-semibold text-slate-700">${escapeHtml(c.public_reporter)}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="handleVote('${c.id}')" title="${isCitizen ? 'Priority Upvote' : 'Citizen sign-in required to vote'}"
+                class="px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition ${voteBtnClass}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+                <span>${c.votes}</span>
+              </button>
+              <button onclick="openDetailModal('${c.id}')" class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-xs font-bold text-slate-700">
+                Details
+              </button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    async function handleVote(cid) {
+      if (!state.user || state.user.role !== 'citizen') {
+        showToast('Sign in with a Citizen account to cast a priority vote (1 vote per account).', 'warning');
+        openAuthModal('citizen', 'login');
+        return;
+      }
+      try {
+        await api(`/api/complaints/${cid}/vote`, { method: 'POST' });
+        await refreshData();
+        renderCurrentView();
+        if (state.selectedComplaintId === cid) {
+          openDetailModal(cid);
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // -------------------- 2. PUBLIC COMPLAINTS DIRECTORY --------------------
+    function renderComplaintsView() {
+      let list = [...state.complaints];
+      const q = state.filters.search.toLowerCase().trim();
+      if (q) {
+        list = list.filter(c =>
+          c.id.toLowerCase().includes(q) ||
+          c.title.toLowerCase().includes(q) ||
+          c.location.toLowerCase().includes(q) ||
+          c.description.toLowerCase().includes(q)
+        );
+      }
+      if (state.filters.category !== 'ALL') {
+        list = list.filter(c => c.category === state.filters.category);
+      }
+      if (state.filters.status !== 'ALL') {
+        list = list.filter(c => c.status === state.filters.status);
+      }
+      if (state.filters.sort === 'votes') {
+        list.sort((a, b) => b.votes - a.votes);
+      }
+
+      return `
+        <section class="bg-forest-900 text-white py-10">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="text-xs font-bold uppercase tracking-widest text-emerald-300">Public Transparency Registry</div>
+              <h1 class="text-3xl font-extrabold mt-1">Public Civic Complaints</h1>
+              <p class="text-sm text-emerald-100/80 mt-1">Inspect active reports, community priority votes, and verified Before &amp; After resolutions.</p>
+            </div>
+            <button onclick="handleReportClick()" class="px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-forest-950 font-extrabold text-xs shadow">
+              + Report New Issue
+            </button>
+          </div>
+        </section>
+
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+          <!-- Search & Filter Bar -->
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 card-shadow grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
+            <input type="text" value="${escapeHtml(state.filters.search)}" oninput="updateFilter('search', this.value)"
+              placeholder="Search ID, street, or keyword..."
+              class="lg:col-span-2 px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-emerald-600" />
+
+            <select onchange="updateFilter('category', this.value)" class="px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white">
+              <option value="ALL">All 10 Categories</option>
+              ${state.categories.map(cat => `<option value="${escapeHtml(cat)}" ${state.filters.category === cat ? 'selected' : ''}>${escapeHtml(cat)}</option>`).join('')}
+            </select>
+
+            <select onchange="updateFilter('status', this.value)" class="px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white">
+              <option value="ALL">All Statuses</option>
+              ${state.statuses.map(st => `<option value="${escapeHtml(st)}" ${state.filters.status === st ? 'selected' : ''}>${escapeHtml(st)}</option>`).join('')}
+            </select>
+
+            <select onchange="updateFilter('sort', this.value)" class="px-3 py-2.5 rounded-xl border border-slate-300 text-sm bg-white">
+              <option value="recent" ${state.filters.sort === 'recent' ? 'selected' : ''}>Newest First</option>
+              <option value="votes" ${state.filters.sort === 'votes' ? 'selected' : ''}>Highest Priority Votes</option>
+            </select>
+          </div>
+
+          ${list.length === 0 ? `
+            <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+              <p class="text-slate-600 font-semibold">No complaints match your current filter criteria.</p>
+              <button onclick="resetFilters()" class="mt-3 px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold">Reset Filters</button>
+            </div>
+          ` : `
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              ${list.map(c => renderComplaintCard(c)).join('')}
+            </div>
+          `}
+        </section>
+      `;
+    }
+
+    function updateFilter(key, val) {
+      state.filters[key] = val;
+      renderCurrentView();
+    }
+
+    function resetFilters() {
+      state.filters = { search: '', category: 'ALL', status: 'ALL', sort: 'recent' };
+      renderCurrentView();
+    }
+
+    // -------------------- 3. REPORT ISSUE VIEW (Authenticated Citizens Only) --------------------
+    function renderReportView() {
+      return `
+        <section class="bg-forest-900 text-white py-10">
+          <div class="max-w-3xl mx-auto px-4 sm:px-6">
+            <div class="text-xs font-bold uppercase tracking-widest text-emerald-300">Authenticated Citizen Submission</div>
+            <h1 class="text-3xl font-extrabold mt-1">Report a Civic Issue</h1>
+            <p class="text-sm text-emerald-100/80 mt-1">Logged in as <span class="font-bold text-white">${escapeHtml(state.user.name)}</span>. Your ticket will receive a unique tracking ID.</p>
+          </div>
+        </section>
+
+        <section class="max-w-3xl mx-auto px-4 sm:px-6 mt-8">
+          <form onsubmit="submitComplaint(event)" class="bg-white rounded-2xl border border-slate-200 card-shadow p-6 sm:p-8 space-y-6">
+            <div class="grid sm:grid-cols-2 gap-5">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Civic Category (10 Sectors) *</label>
+                <select id="rep-category" required onchange="onReportInputChange()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:border-emerald-600">
+                  <option value="">Select Category...</option>
+                  ${state.categories.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join('')}
+                </select>
+                <div id="rep-routed-dept" class="text-[11px] font-semibold text-emerald-700 mt-1"></div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Street / Ward Location *</label>
+                <input id="rep-location" type="text" required oninput="onReportInputChange()" placeholder="e.g. 12th Main, Indiranagar"
+                  class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-emerald-600" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Issue Title *</label>
+              <input id="rep-title" type="text" required oninput="onReportInputChange()" placeholder="e.g. Deep pothole near bus stop causing traffic bottleneck"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-emerald-600" />
+            </div>
+
+            <!-- Live Duplicate Complaint Detection Box -->
+            <div id="duplicate-alert-box" class="hidden rounded-xl bg-amber-50 border border-amber-300 p-4">
+              <div class="text-xs font-extrabold text-amber-900 flex items-center gap-2">
+                <span>Possible Duplicate Complaint Detected Nearby</span>
+              </div>
+              <p class="text-[11px] text-amber-800 mt-1">If one of these active tickets matches your issue, upvote it instead of creating a duplicate:</p>
+              <div id="duplicate-list" class="mt-2.5 space-y-2"></div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Detailed Description *</label>
+              <textarea id="rep-desc" rows="3" required placeholder="Describe the severity, landmark, and safety impact..."
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:border-emerald-600"></textarea>
+            </div>
+
+            <!-- Mandatory Before Photo Upload -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Mandatory "Before" Evidence Photo *</label>
+              <div class="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center bg-slate-50">
+                <input id="rep-photo-input" type="file" accept="image/*" required onchange="handleBeforePhotoUpload(event)" class="text-xs text-slate-600" />
+                <p class="text-[11px] text-slate-500 mt-1.5">Required for department verification and side-by-side After repair comparison.</p>
+                <img id="rep-photo-preview" class="hidden mt-3 mx-auto max-h-48 rounded-xl border border-slate-200 shadow-sm" />
+              </div>
+            </div>
+
+            <!-- Anonymous Reporting Toggle (Requires Sign-In) -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-3">
+              <input id="rep-anon" type="checkbox" class="mt-1 w-4 h-4 accent-emerald-600" />
+              <label for="rep-anon" class="text-xs text-slate-700 cursor-pointer">
+                <span class="font-bold text-slate-900 block">Submit Anonymously (Mask My Public Identity)</span>
+                Your verified account is recorded internally for municipal accountability, but your name is hidden from public feeds and department officers.
+              </label>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+              <button type="button" onclick="navigate('complaints')" class="px-5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700">
+                Cancel
+              </button>
+              <button type="submit" class="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow">
+                Submit Civic Complaint
+              </button>
+            </div>
+          </form>
+        </section>
+      `;
+    }
+
+    let dupTimer = null;
+    function onReportInputChange() {
+      const cat = document.getElementById('rep-category')?.value || '';
+      const deptEl = document.getElementById('rep-routed-dept');
+      if (deptEl) {
+        deptEl.textContent = cat ? `Auto-Routes To: ${state.categoryDeptMap[cat]}` : '';
+      }
+
+      clearTimeout(dupTimer);
+      dupTimer = setTimeout(async () => {
+        const location = document.getElementById('rep-location')?.value || '';
+        const title = document.getElementById('rep-title')?.value || '';
+        if (!cat) return;
+        try {
+          const res = await api(`/api/complaints/duplicates?category=${encodeURIComponent(cat)}&location=${encodeURIComponent(location)}&title=${encodeURIComponent(title)}`);
+          const box = document.getElementById('duplicate-alert-box');
+          const listEl = document.getElementById('duplicate-list');
+          if (!box || !listEl) return;
+          if (res.duplicates.length > 0) {
+            box.classList.remove('hidden');
+            listEl.innerHTML = res.duplicates.map(d => `
+              <div class="bg-white rounded-lg p-2.5 border border-amber-200 flex items-center justify-between gap-2 text-xs">
+                <div>
+                  <span class="font-mono font-bold text-emerald-700">${escapeHtml(d.id)}</span> —
+                  <span class="font-bold text-slate-800">${escapeHtml(d.title)}</span>
+                  <span class="text-slate-500">(${escapeHtml(d.location)})</span>
+                </div>
+                <button type="button" onclick="openDetailModal('${d.id}')" class="px-2.5 py-1 rounded bg-amber-600 text-white font-bold shrink-0">
+                  Inspect / Vote (${d.votes})
+                </button>
+              </div>
+            `).join('');
+          } else {
+            box.classList.add('hidden');
+          }
+        } catch (_) {}
+      }, 300);
+    }
+
+    async function handleBeforePhotoUpload(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      state.reportBeforePhoto = await fileToBase64(file);
+      const prev = document.getElementById('rep-photo-preview');
+      if (prev) {
+        prev.src = state.reportBeforePhoto;
+        prev.classList.remove('hidden');
+      }
+    }
+
+    async function submitComplaint(e) {
+      e.preventDefault();
+      try {
+        const payload = {
+          category: document.getElementById('rep-category').value,
+          location: document.getElementById('rep-location').value,
+          title: document.getElementById('rep-title').value,
+          description: document.getElementById('rep-desc').value,
+          is_anonymous: document.getElementById('rep-anon').checked,
+          before_photo: state.reportBeforePhoto
+        };
+        const res = await api('/api/complaints', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        await refreshData();
+        showToast(`Complaint ${res.complaint.id} logged and routed to ${res.complaint.department}!`);
+        navigate('dashboard');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // -------------------- 4. DASHBOARDS (NO ANALYTICS/CHARTS) --------------------
+    function renderCitizenDashboard() {
+      const myTickets = state.complaints.filter(c => c.reporter_id === state.user.id);
+      return `
+        <section class="bg-forest-900 text-white py-10">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="text-xs font-bold uppercase tracking-widest text-emerald-300">Citizen Account</div>
+              <h1 class="text-3xl font-extrabold mt-1">My Submitted Complaints</h1>
+              <p class="text-sm text-emerald-100/80 mt-1">Track status updates, inspect Before &amp; After repair photos, or reopen unresolved tickets.</p>
+            </div>
+            <button onclick="handleReportClick()" class="px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-forest-950 font-extrabold text-xs">
+              + Report New Issue
+            </button>
+          </div>
+        </section>
+
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+          ${myTickets.length === 0 ? `
+            <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+              <p class="text-slate-600 font-semibold">You haven't submitted any civic complaints yet.</p>
+              <button onclick="handleReportClick()" class="mt-4 px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold">Submit Your First Report</button>
+            </div>
+          ` : `
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              ${myTickets.map(c => renderComplaintCard(c)).join('')}
+            </div>
+          `}
+        </section>
+      `;
+    }
+
+    function renderMainAuthorityDashboard() {
+      return `
+        <section class="bg-forest-900 text-white py-10">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-xs font-bold uppercase tracking-widest text-emerald-300">Super Authority Control Center</div>
+            <h1 class="text-3xl font-extrabold mt-1">Main Authority Dispatch &amp; Accounts</h1>
+            <p class="text-sm text-emerald-100/80 mt-1">Assign or reassign tickets across all 5 municipal departments, update statuses, and manage Department Authority accounts.</p>
+          </div>
+        </section>
+
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-10">
+          <!-- All Citywide Complaints Dispatch Table -->
+          <div class="bg-white rounded-2xl border border-slate-200 card-shadow overflow-hidden">
+            <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+              <h2 class="font-extrabold text-slate-900 text-lg">All Citywide Complaints (${state.authorityComplaints.length})</h2>
+              <span class="text-xs text-slate-500">Click "Manage Ticket" to reassign department, update status, or upload After proof</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 uppercase font-bold border-b border-slate-200">
+                  <tr>
+                    <th class="px-4 py-3">Ticket ID</th>
+                    <th class="px-4 py-3">Issue &amp; Location</th>
+                    <th class="px-4 py-3">Category</th>
+                    <th class="px-4 py-3">Assigned Department</th>
+                    <th class="px-4 py-3">Status</th>
+                    <th class="px-4 py-3">Votes</th>
+                    <th class="px-4 py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  ${state.authorityComplaints.map(c => `
+                    <tr class="hover:bg-slate-50/80">
+                      <td class="px-4 py-3.5 font-mono font-bold text-emerald-700">${escapeHtml(c.id)}</td>
+                      <td class="px-4 py-3.5">
+                        <div class="font-bold text-slate-900">${escapeHtml(c.title)}</div>
+                        <div class="text-slate-500">${escapeHtml(c.location)} • By ${escapeHtml(c.public_reporter)}</div>
+                      </td>
+                      <td class="px-4 py-3.5 text-slate-700 font-medium">${escapeHtml(c.category)}</td>
+                      <td class="px-4 py-3.5 font-semibold text-slate-800">${escapeHtml(c.department)}</td>
+                      <td class="px-4 py-3.5">${statusBadge(c.status)}</td>
+                      <td class="px-4 py-3.5 font-bold text-slate-700">${c.votes}</td>
+                      <td class="px-4 py-3.5 text-right">
+                        <button onclick="openDetailModal('${c.id}')" class="px-3 py-1.5 rounded-lg bg-forest-900 hover:bg-forest-800 text-white font-bold">
+                          Manage Ticket
+                        </button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Department Authority Account Creation & Management (Main Authority Only) -->
+          <div class="grid lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 card-shadow p-6">
+              <h3 class="font-extrabold text-slate-900 text-base">Create Department Authority Account</h3>
+              <p class="text-xs text-slate-500 mt-1">Only the Main Authority can issue new department officer credentials.</p>
+              <form onsubmit="createDeptAccount(event)" class="mt-4 space-y-3.5">
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Officer Name *</label>
+                  <input id="dept-acc-name" type="text" required placeholder="e.g. Suresh Menon" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Official Email *</label>
+                  <input id="dept-acc-email" type="email" required placeholder="officer@cityfix.gov" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Assigned Municipal Department *</label>
+                  <select id="dept-acc-dept" required class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white">
+                    ${state.departments.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('')}
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Password *</label>
+                  <input id="dept-acc-pass" type="password" required minlength="4" placeholder="Min 4 characters" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs" />
+                </div>
+                <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold">
+                  + Create Department Officer
+                </button>
+              </form>
+            </div>
+
+            <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 card-shadow overflow-hidden">
+              <div class="p-5 border-b border-slate-200">
+                <h3 class="font-extrabold text-slate-900 text-base">Manage Department Authority Accounts (${state.deptAccounts.length})</h3>
+              </div>
+              <div class="divide-y divide-slate-100">
+                ${state.deptAccounts.map(acc => `
+                  <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div>
+                      <div class="font-bold text-slate-900 flex items-center gap-2">
+                        <span>${escapeHtml(acc.name)}</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${acc.active ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">
+                          ${acc.active ? 'Active' : 'Suspended'}
+                        </span>
+                      </div>
+                      <div class="text-slate-500 mt-0.5">${escapeHtml(acc.email)} • <span class="font-semibold text-slate-700">${escapeHtml(acc.department)}</span></div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button onclick="toggleDeptAccount(${acc.id})" class="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 font-bold text-slate-700">
+                        ${acc.active ? 'Suspend' : 'Activate'}
+                      </button>
+                      <button onclick="deleteDeptAccount(${acc.id})" class="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold">
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderDeptAuthorityDashboard() {
+      return `
+        <section class="bg-forest-900 text-white py-10">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-xs font-bold uppercase tracking-widest text-emerald-300">Department Officer Console</div>
+            <h1 class="text-3xl font-extrabold mt-1">${escapeHtml(state.user.department)}</h1>
+            <p class="text-sm text-emerald-100/80 mt-1">Showing strictly complaints assigned to your department. Upload mandatory After photo proof to mark issues Resolved.</p>
+          </div>
+        </section>
+
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+          ${state.authorityComplaints.length === 0 ? `
+            <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+              <p class="text-slate-600 font-semibold">No complaints are currently assigned to ${escapeHtml(state.user.department)}.</p>
+            </div>
+          ` : `
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              ${state.authorityComplaints.map(c => renderComplaintCard(c)).join('')}
+            </div>
+          `}
+        </section>
+      `;
+    }
+
+    async function createDeptAccount(e) {
+      e.preventDefault();
+      try {
+        await api('/api/authority/accounts', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: document.getElementById('dept-acc-name').value,
+            email: document.getElementById('dept-acc-email').value,
+            department: document.getElementById('dept-acc-dept').value,
+            password: document.getElementById('dept-acc-pass').value
+          })
+        });
+        await refreshData();
+        renderCurrentView();
+        showToast('Department Authority account created.');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function toggleDeptAccount(id) {
+      try {
+        await api(`/api/authority/accounts/${id}/toggle`, { method: 'POST' });
+        await refreshData();
+        renderCurrentView();
+        showToast('Account status updated.');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function deleteDeptAccount(id) {
+      try {
+        await api(`/api/authority/accounts/${id}`, { method: 'DELETE' });
+        await refreshData();
+        renderCurrentView();
+        showToast('Department account removed.');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // -------------------- 5. DETAIL MODAL (Before/After Proof, Timeline, Reopen, Officer Controls) --------------------
+    function openDetailModal(cid) {
+      state.selectedComplaintId = cid;
+      const c = state.authorityComplaints.find(x => x.id === cid) || state.complaints.find(x => x.id === cid);
+      if (!c) return;
+
+      const isCitizenOwner = state.user && state.user.role === 'citizen' && state.user.id === c.reporter_id;
+      const isMainAuth = state.user && state.user.role === 'main_authority';
+      const isDeptAuth = state.user && state.user.role === 'dept_authority' && state.user.department === c.department;
+      const canManageStatus = isMainAuth || isDeptAuth;
+
+      const body = document.getElementById('detail-modal-body');
+      body.innerHTML = `
+        <div class="pr-8">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="font-mono text-xs font-extrabold px-2.5 py-1 rounded-lg bg-forest-900 text-emerald-300">${escapeHtml(c.id)}</span>
+            ${statusBadge(c.status)}
+            <span class="text-xs font-bold text-emerald-700">${escapeHtml(c.category)}</span>
+            <span class="text-xs text-slate-400">•</span>
+            <span class="text-xs font-semibold text-slate-600">${escapeHtml(c.department)}</span>
+          </div>
+          <h2 class="text-2xl font-extrabold text-slate-900 mt-2.5">${escapeHtml(c.title)}</h2>
+          <p class="text-xs text-slate-500 mt-1">
+            Location: <strong class="text-slate-700">${escapeHtml(c.location)}</strong> • Reported by <strong class="text-slate-700">${escapeHtml(c.public_reporter)}</strong> on ${escapeHtml(c.created_at)}
+          </p>
+        </div>
+
+        <p class="mt-4 text-sm text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-200">
+          ${escapeHtml(c.description)}
+        </p>
+
+        <!-- Mandatory Side-by-Side Before & After Visual Verification -->
+        <div class="mt-6">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-3">Visual Verification Proof (Before &amp; After)</h3>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div class="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
+              <div class="px-3 py-1.5 bg-slate-200/70 text-[11px] font-bold text-slate-700">BEFORE (Citizen Evidence)</div>
+              <img src="${c.before_photo}" alt="Before evidence" class="w-full h-48 object-cover" />
+            </div>
+            <div class="rounded-xl border ${c.after_photo ? 'border-emerald-300 bg-emerald-50/30' : 'border-dashed border-slate-300 bg-slate-50'} overflow-hidden flex flex-col">
+              <div class="px-3 py-1.5 ${c.after_photo ? 'bg-emerald-600 text-white' : 'bg-slate-200/70 text-slate-600'} text-[11px] font-bold">
+                AFTER (Municipal Resolution Proof)
+              </div>
+              ${c.after_photo ? `
+                <img src="${c.after_photo}" alt="After resolution" class="w-full h-48 object-cover" />
+              ` : `
+                <div class="flex-1 h-48 flex items-center justify-center p-4 text-center text-xs text-slate-500">
+                  Pending municipal resolution photo. Required before status can be marked Resolved.
+                </div>
+              `}
+            </div>
+          </div>
+        </div>
+
+        <!-- Priority Voting Bar -->
+        <div class="mt-5 p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 flex items-center justify-between">
+          <div class="text-xs text-emerald-950">
+            <strong>Community Priority Votes:</strong> ${c.votes} resident(s) prioritized this ticket.
+          </div>
+          <button onclick="handleVote('${c.id}')" class="px-4 py-2 rounded-xl text-xs font-extrabold ${c.has_voted ? 'bg-emerald-700 text-white' : 'bg-white border border-emerald-300 text-emerald-800'}">
+            ${c.has_voted ? 'Upvoted (Click to Undo)' : '+ Upvote Issue'}
+          </button>
+        </div>
+
+        <!-- Citizen Reopen Resolved Complaint Box -->
+        ${isCitizenOwner && c.status === 'Resolved' ? `
+          <form onsubmit="submitReopen(event, '${c.id}')" class="mt-5 p-4 rounded-xl bg-rose-50 border border-rose-200 space-y-3">
+            <div class="text-xs font-extrabold text-rose-900">Issue Not Properly Fixed? Reopen Complaint</div>
+            <input id="reopen-reason-input" type="text" required minlength="5" placeholder="Enter reason why this resolved issue must be reopened..."
+              class="w-full px-3 py-2 rounded-lg border border-rose-300 bg-white text-xs" />
+            <button type="submit" class="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold">
+              Reopen Complaint
+            </button>
+          </form>
+        ` : ''}
+
+        <!-- Main Authority Department Reassignment -->
+        ${isMainAuth ? `
+          <form onsubmit="submitReassign(event, '${c.id}')" class="mt-5 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+            <div class="text-xs font-extrabold text-slate-900">Main Authority: Assign / Reassign Department</div>
+            <div class="grid sm:grid-cols-2 gap-3">
+              <select id="assign-dept-select" class="px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs">
+                ${state.departments.map(d => `<option value="${escapeHtml(d)}" ${c.department === d ? 'selected' : ''}>${escapeHtml(d)}</option>`).join('')}
+              </select>
+              <input id="assign-note-input" type="text" placeholder="Optional dispatch note..." class="px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs" />
+            </div>
+            <button type="submit" class="px-4 py-2 rounded-lg bg-forest-900 text-white text-xs font-bold">
+              Update Department Assignment
+            </button>
+          </form>
+        ` : ''}
+
+        <!-- Authority Status Update & Mandatory After Photo Proof -->
+        ${canManageStatus ? `
+          <form onsubmit="submitStatusUpdate(event, '${c.id}')" class="mt-5 p-4 rounded-xl bg-emerald-50/60 border border-emerald-200 space-y-3">
+            <div class="text-xs font-extrabold text-forest-900">Officer Action: Update Lifecycle Status</div>
+            <div class="grid sm:grid-cols-2 gap-3">
+              <select id="status-update-select" onchange="toggleAfterPhotoRequirement()" class="px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-bold">
+                ${state.statuses.map(st => `<option value="${escapeHtml(st)}" ${c.status === st ? 'selected' : ''}>${escapeHtml(st)}</option>`).join('')}
+              </select>
+              <input id="status-note-input" type="text" placeholder="Progress or resolution remarks..." class="px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs" />
+            </div>
+            <div id="after-photo-upload-wrap" class="${c.status === 'Resolved' ? '' : 'hidden'} bg-white p-3 rounded-lg border border-emerald-300">
+              <label class="block text-[11px] font-bold text-emerald-900 mb-1">Mandatory "After" Resolution Photo Proof *</label>
+              <input id="after-photo-file" type="file" accept="image/*" class="text-xs text-slate-600" />
+            </div>
+            <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold">
+              Save Status Update
+            </button>
+          </form>
+        ` : ''}
+
+        <!-- Status History & Audit Timeline -->
+        <div class="mt-6">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-3">Status History &amp; Audit Timeline</h3>
+          <div class="space-y-3 border-l-2 border-emerald-500 pl-4 ml-1.5">
+            ${c.timeline.map(t => `
+              <div>
+                <div class="flex items-center gap-2">
+                  ${statusBadge(t.status)}
+                  <span class="text-xs font-bold text-slate-800">${escapeHtml(t.actor)}</span>
+                  <span class="text-[11px] text-slate-400">${escapeHtml(t.timestamp)}</span>
+                </div>
+                <p class="text-xs text-slate-600 mt-1">${escapeHtml(t.note)}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('detail-modal').classList.remove('hidden');
+    }
+
+    function toggleAfterPhotoRequirement() {
+      const val = document.getElementById('status-update-select')?.value;
+      const wrap = document.getElementById('after-photo-upload-wrap');
+      if (!wrap) return;
+      if (val === 'Resolved') wrap.classList.remove('hidden');
+      else wrap.classList.add('hidden');
+    }
+
+    function closeDetailModal() {
+      state.selectedComplaintId = null;
+      document.getElementById('detail-modal').classList.add('hidden');
+    }
+
+    async function submitReopen(e, cid) {
+      e.preventDefault();
+      try {
+        const reason = document.getElementById('reopen-reason-input').value;
+        await api(`/api/complaints/${cid}/reopen`, {
+          method: 'POST',
+          body: JSON.stringify({ reason })
+        });
+        await refreshData();
+        renderCurrentView();
+        openDetailModal(cid);
+        showToast('Complaint reopened and returned to department queue.');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function submitReassign(e, cid) {
+      e.preventDefault();
+      try {
+        const department = document.getElementById('assign-dept-select').value;
+        const note = document.getElementById('assign-note-input').value;
+        await api(`/api/complaints/${cid}/assign`, {
+          method: 'POST',
+          body: JSON.stringify({ department, note })
+        });
+        await refreshData();
+        renderCurrentView();
+        openDetailModal(cid);
+        showToast(`Complaint assigned to ${department}.`);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function submitStatusUpdate(e, cid) {
+      e.preventDefault();
+      try {
+        const status = document.getElementById('status-update-select').value;
+        const note = document.getElementById('status-note-input').value;
+        const file = document.getElementById('after-photo-file')?.files?.[0];
+        let after_photo = '';
+        if (file) {
+          after_photo = await fileToBase64(file);
+        }
+        await api(`/api/complaints/${cid}/status`, {
+          method: 'POST',
+          body: JSON.stringify({ status, note, after_photo })
+        });
+        await refreshData();
+        renderCurrentView();
+        openDetailModal(cid);
+        showToast(`Status updated to ${status}.`);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // -------------------- 6. SEPARATE CITIZEN & AUTHORITY AUTH MODAL --------------------
+    function openAuthModal(portal = 'citizen', mode = 'login') {
+      state.authPortal = portal;
+      state.authMode = mode;
+      renderAuthModal();
+      document.getElementById('auth-modal').classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+      document.getElementById('auth-modal').classList.add('hidden');
+    }
+
+    function switchAuthPortal(portal) {
+      state.authPortal = portal;
+      state.authMode = 'login';
+      renderAuthModal();
+    }
+
+    function switchAuthMode(mode) {
+      state.authMode = mode;
+      renderAuthModal();
+    }
+
+    function fillDemoCredentials(email, pass) {
+      document.getElementById('auth-email').value = email;
+      document.getElementById('auth-password').value = pass;
+    }
+
+    function renderAuthModal() {
+      const citTab = document.getElementById('tab-portal-citizen');
+      const authTab = document.getElementById('tab-portal-authority');
+      if (state.authPortal === 'citizen') {
+        citTab.className = 'py-2 rounded-lg text-xs font-extrabold bg-white text-forest-900 shadow-sm';
+        authTab.className = 'py-2 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-800';
+      } else {
+        authTab.className = 'py-2 rounded-lg text-xs font-extrabold bg-forest-900 text-white shadow-sm';
+        citTab.className = 'py-2 rounded-lg text-xs font-bold text-slate-500 hover:text-slate-800';
+      }
+
+      const body = document.getElementById('auth-modal-body');
+
+      if (state.authPortal === 'citizen') {
+        if (state.authMode === 'register') {
+          body.innerHTML = `
+            <h2 class="text-xl font-extrabold text-slate-900">Citizen Account Registration</h2>
+            <p class="text-xs text-slate-500 mt-1">Create a verified resident account to submit complaints (including anonymous reports) and vote.</p>
+            <form onsubmit="submitRegister(event)" class="mt-4 space-y-3.5">
+              <div>
+                <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Full Name *</label>
+                <input id="reg-name" type="text" required placeholder="Your full name" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Email Address *</label>
+                <input id="reg-email" type="email" required placeholder="you@example.com" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Password *</label>
+                <input id="reg-password" type="password" required minlength="4" placeholder="Create password" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
+              </div>
+              <button type="submit" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold">
+                Create Citizen Account
+              </button>
+            </form>
+            <div class="mt-4 text-center text-xs text-slate-600">
+              Already registered? <button onclick="switchAuthMode('login')" class="font-bold text-emerald-700 hover:underline">Sign In</button>
+            </div>
+          `;
+        } else {
+          body.innerHTML = `
+            <h2 class="text-xl font-extrabold text-slate-900">Citizen Sign In</h2>
+            <p class="text-xs text-slate-500 mt-1">Sign in to report civic issues, submit anonymous reports, or cast priority votes.</p>
+            <form onsubmit="submitLogin(event, 'citizen')" class="mt-4 space-y-3.5">
+              <div>
+                <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Citizen Email *</label>
+                <input id="auth-email" type="email" required placeholder="citizen@cityfix.gov" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Password *</label>
+                <input id="auth-password" type="password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
+              </div>
+              <button type="submit" class="w-full py-3 rounded-xl bg-forest-900 hover:bg-forest-800 text-white text-xs font-extrabold">
+                Sign In as Citizen
+              </button>
+            </form>
+
+            <!-- 1-Click Demo Citizen Credentials -->
+            <div class="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs">
+              <div class="font-bold text-emerald-900 mb-1.5">Demo Citizen Credentials (1-Click Fill):</div>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="fillDemoCredentials('citizen@cityfix.gov', 'citizen123')" class="px-2.5 py-1 rounded-lg bg-white border border-emerald-300 font-semibold text-emerald-800 hover:bg-emerald-100">
+                  Ananya (citizen@cityfix.gov)
+                </button>
+                <button type="button" onclick="fillDemoCredentials('rohan@cityfix.gov', 'citizen123')" class="px-2.5 py-1 rounded-lg bg-white border border-emerald-300 font-semibold text-emerald-800 hover:bg-emerald-100">
+                  Rohan (rohan@cityfix.gov)
+                </button>
+              </div>
+            </div>
+
+            <!-- Guest Mode Option (Browse Only, Cannot Report) -->
+            <div class="mt-4 pt-4 border-t border-slate-200 flex flex-col gap-2.5">
+              <button type="button" onclick="enterGuestMode()" class="w-full py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-xs font-bold text-slate-700">
+                Continue as Guest (Browse Only — No Reporting)
+              </button>
+              <div class="text-center text-xs text-slate-600">
+                New resident? <button onclick="switchAuthMode('register')" class="font-bold text-emerald-700 hover:underline">Register Citizen Account</button>
+              </div>
+            </div>
+          `;
+        }
+      } else {
+        // Separate Authority Login Portal (No Self-Registration Allowed)
+        body.innerHTML = `
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200 text-[10px] font-bold text-amber-800 mb-2">
+            OFFICIAL MUNICIPAL ACCESS ONLY
+          </div>
+          <h2 class="text-xl font-extrabold text-slate-900">Authority Portal Login</h2>
+          <p class="text-xs text-slate-500 mt-1">Restricted to Main Authority and Department Authority officers.</p>
+          <form onsubmit="submitLogin(event, 'authority')" class="mt-4 space-y-3.5">
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Official Authority Email *</label>
+              <input id="auth-email" type="email" required placeholder="admin@cityfix.gov" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Password *</label>
+              <input id="auth-password" type="password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm" />
+            </div>
+            <button type="submit" class="w-full py-3 rounded-xl bg-forest-900 hover:bg-forest-800 text-white text-xs font-extrabold">
+              Sign In to Authority Console
+            </button>
+          </form>
+
+          <!-- 1-Click Demo Authority Credentials -->
+          <div class="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+            <div class="font-bold text-slate-800">Demo Authority Credentials (1-Click Fill):</div>
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" onclick="fillDemoCredentials('admin@cityfix.gov', 'admin123')" class="px-2.5 py-1 rounded-lg bg-forest-900 text-white font-semibold">
+                Main Authority (admin@cityfix.gov)
+              </button>
+              <button type="button" onclick="fillDemoCredentials('roads@cityfix.gov', 'dept123')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-slate-700 font-semibold">
+                Roads Dept
+              </button>
+              <button type="button" onclick="fillDemoCredentials('sanitation@cityfix.gov', 'dept123')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-slate-700 font-semibold">
+                Sanitation Dept
+              </button>
+              <button type="button" onclick="fillDemoCredentials('lighting@cityfix.gov', 'dept123')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-slate-700 font-semibold">
+                Lighting Dept
+              </button>
+              <button type="button" onclick="fillDemoCredentials('water@cityfix.gov', 'dept123')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-slate-700 font-semibold">
+                Water Dept
+              </button>
+              <button type="button" onclick="fillDemoCredentials('parks@cityfix.gov', 'dept123')" class="px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-slate-700 font-semibold">
+                Parks Dept
+              </button>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    async function submitLogin(e, portal) {
+      e.preventDefault();
+      try {
+        const res = await api('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: document.getElementById('auth-email').value,
+            password: document.getElementById('auth-password').value,
+            portal
+          })
+        });
+        state.user = res.user;
+        state.isGuest = false;
+        closeAuthModal();
+        await refreshData();
+        renderHeader();
+        navigate('dashboard');
+        showToast(`Welcome back, ${state.user.name}!`);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function submitRegister(e) {
+      e.preventDefault();
+      try {
+        const res = await api('/api/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: document.getElementById('reg-name').value,
+            email: document.getElementById('reg-email').value,
+            password: document.getElementById('reg-password').value
+          })
+        });
+        state.user = res.user;
+        state.isGuest = false;
+        closeAuthModal();
+        await refreshData();
+        renderHeader();
+        navigate('dashboard');
+        showToast('Citizen account registered and signed in!');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Boot application
+    initApp();
+  </script>
+</body>
+</html>
